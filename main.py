@@ -1,24 +1,20 @@
-from nersc_api_client import NERSCApiClient
+from lib.api_client import NerscApiClient
+from lib.job_interface import NerscJobInterface
+
+with open("./sample_jobs/test.sh", "r") as f:
+    JOB = f.read()
 
 
 def main():
     print("Hello from nersonic!")
 
-    client = NERSCApiClient()
+    client = NerscApiClient()
     client.connect()
+    job_interface = NerscJobInterface(client)
 
-    if client.connected:
-        print("Connected to NERSC API.")
-    else:
-        print("Failed to connect to NERSC API.")
-
-    response = client.get("account/projects")
-    if response.status_code == 200:
-        print("Request successful.")
-        print(response.json())
-    else:
-        print(f"Request failed with status code: {response.status_code}")
-        print(f"Text: {response.text}")
+    job_id = job_interface.submit(JOB)
+    status = job_interface.status(job_id)
+    queue = job_interface.queue()
 
 
 if __name__ == "__main__":
