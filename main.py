@@ -1,3 +1,6 @@
+import os
+import subprocess
+
 from time import sleep
 
 from lib.api_client import NerscApiClient
@@ -6,6 +9,9 @@ from lib.job_manager import JobManager
 
 with open("./sample_jobs/test.sh", "r") as f:
     JOB = f.read()
+
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def main():
@@ -23,25 +29,37 @@ def main():
     job_manager = JobManager(NerscJobInterface(client))
 
     print("Submitting job Triton Server job...")
-    job_manager.submit(name="triton-server", job_path="/workspaces/nersonic/slurm_triton_deployment/start_triton_slurm.sh")
+    job_manager.submit(name="triton-server", job_path=f"{ROOT_DIR}/slurm_triton_deployment/start_triton_slurm.sh")
     print("Done submitting job.\n")
 
     print("Waiting for job to start...")
     while True:
         job_manager.update_queue()
         job = job_manager.get(name="triton-server")[0]
-        if job.state == "RUNNING":
-            print("Job started successfully.")
+        print(f"Job ID: {job.id}, State: {job.state}")
+        if job.state != "PENDING":
             break
-        elif job.state == "FAILED":
-            print("Job failed to start.")
-            return
-        elif job.state == "CANCELLED":
-            print("Job was cancelled.")
-            return
-        else:
-            print(f"Job {job.id} status: {job.state} - sleeping for 60 seconds...")
+        print("Sleeping for 60 seconds...")
         sleep(60)
+
+    print("Starting load balancer...")
+    try:
+        lb = subprocess.Popen(f"{ROOT_DIR}/slurm_triton_deployment/start_lb.sh {job.id}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        while lb.poll() is None:
+            output = lb.stdout.readline()
+            if output == b"" and lb.poll() is not None:
+                break
+            if output:
+                print(output.decode().strip())
+        print("Load balancer exited with code:", lb.poll())
+        print(lb.stdout.read().decode())
+        print(lb.stderr.read().decode())
+    except KeyboardInterrupt:
+        print("Stopping load balancer...")
+        lb.terminate()
+        lb.wait()
+        print("Load balancer terminated.\n")
+        print("Exiting...")
 
 if __name__ == "__main__":
     main()

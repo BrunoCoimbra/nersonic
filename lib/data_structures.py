@@ -23,7 +23,7 @@ class JobArray(list):
         self.id = id
 
 
-class JobQueue(dict):
+class JobDictionary(dict):
     """
-    A class representing a job queue.
+    A class representing a job dictionary.
     """

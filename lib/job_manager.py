@@ -1,14 +1,14 @@
-from lib.data_structures import JobQueue
+from lib.data_structures import JobDictionary, JobArray
 from lib.job_interface import JobInterface
 
 
 class JobManager:
     def __init__(self, job_interface: JobInterface):
         self.job_interface = job_interface
-        self.queue = JobQueue()
+        self.queue = JobDictionary()
         self.name_to_job_id = {}
 
-    def get(self, name: str = None, job_id: str = None) -> str:
+    def get(self, name: str = None, job_id: str = None) -> JobArray:
         """
         Gets the status of a job from the job manager queue.
 
@@ -45,8 +45,8 @@ class JobManager:
             with open(job_path, "r") as f:
                 job = f.read()
         
-        job_id = self.job_interface.submit(job)
-        job_status = self.job_interface.status(job_id)
+        job_id = self.job_interface.submit_job(job)
+        job_status = self.job_interface.job_status(job_id)
         self.queue[job_id] = job_status
         if name:
             self.name_to_job_id[name] = job_id
@@ -84,9 +84,13 @@ class JobManager:
         """
 
         queue = self.job_interface.queue()
-        for job_id, job_status in queue.items():
-            if job_id in self.queue:
-                self.queue[job_id] = job_status
+        history = self.job_interface.history()
+        for job_id in self.queue:
+            if job_id in queue:
+                self.queue[job_id] = queue[job_id]
+            elif job_id in history:
+                self.queue[job_id] = history[job_id]
+
 
     def load(self, name: str = None, job_id: str = None):
         """
@@ -96,7 +100,7 @@ class JobManager:
             name (str): The name of the job to be loaded.
             job_id (str): The ID of the job to be loaded. ("all" to load all jobs)
         Returns:
-            JobQueue: The status of the job.
+            JobDictionary: The status of the job.
         """
 
         if job_id == "all":

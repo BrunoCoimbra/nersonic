@@ -15,8 +15,5 @@ wheels/
 # API Credentials
 creds/*
 
-# IDE files
-.vscode
-
 # Subrepos
 slurm_triton_deployment
