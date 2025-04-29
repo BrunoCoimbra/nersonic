@@ -3,33 +3,20 @@ import subprocess
 
 from time import sleep
 
-from lib.api_client import NerscApiClient
-from lib.job_interface import NerscJobInterface
+from lib.nersc_site_interface import NerscSiteInterface
 from lib.job_manager import JobManager
 
-with open("./sample_jobs/test.sh", "r") as f:
-    JOB = f.read()
-
-
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+from configparser import ConfigParser
 
 
 def main():
     print("NERSC Triton Test")
     print("-----------------\n")
 
-    print("Connecting to NERSC API...")
-    client = NerscApiClient()
-    client.connect()
-    if not client.connected:
-        print("Failed to connect to NERSC API.")
-        return
-    print("Connected to NERSC API.\n")
-
-    job_manager = JobManager(NerscJobInterface(client))
+    job_manager = JobManager(NerscSiteInterface(config["NERSC"]))
 
     print("Submitting job Triton Server job...")
-    job_manager.submit(name="triton-server", job_path=f"{ROOT_DIR}/slurm_triton_deployment/start_triton_slurm.sh")
+    job_manager.submit(name="triton-server", job_path=f"{ROOT_DIR}/sample_jobs/test.sh")
     print("Done submitting job.\n")
 
     print("Waiting for job to start...")
@@ -62,4 +49,9 @@ def main():
         print("Exiting...")
 
 if __name__ == "__main__":
+    ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+    config = ConfigParser()
+    config.read(os.path.join(ROOT_DIR, "settings.cfg"))
+
     main()

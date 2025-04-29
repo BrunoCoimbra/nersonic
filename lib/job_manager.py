@@ -1,9 +1,11 @@
-from lib.data_structures import JobDictionary, JobArray
-from lib.job_interface import JobInterface
+import asyncio
+
+from lib.data_structures import JobArray, JobDictionary
+from lib.site_interface import SiteInterface
 
 
 class JobManager:
-    def __init__(self, job_interface: JobInterface):
+    def __init__(self, job_interface: SiteInterface):
         self.job_interface = job_interface
         self.queue = JobDictionary()
         self.name_to_job_id = {}
@@ -27,26 +29,22 @@ class JobManager:
 
         return self.queue[job_id]
 
-    def submit(self, name: str = None, job: str = None, job_path: str = None) -> str:
+    def submit(self, name: str = None, job_path: str = None) -> str:
         """
-        Submits a job to the NERSC API.
+        Submits a job to the site.
 
         Args:
             name (str): The name of the job.
-            job (str): The job to be submitted.
             job_path (str): The path to the job file.
         Returns:
             str: The ID of the submitted job array.
         """
 
-        if job is None and job_path is None:
-            raise ValueError("Either job or job_path must be provided.")
-        if job_path is not None:
-            with open(job_path, "r") as f:
-                job = f.read()
+        if job_path is None:
+            raise ValueError("job_path must be provided.")
         
-        job_id = self.job_interface.submit_job(job)
-        job_status = self.job_interface.job_status(job_id)
+        job_id = asyncio.run(self.job_interface.submit_job(job_path))
+        job_status = asyncio.run(self.job_interface.job_status(job_id))
         self.queue[job_id] = job_status
         if name:
             self.name_to_job_id[name] = job_id
@@ -55,7 +53,7 @@ class JobManager:
     
     def cancel(self, name: str = None, job_id: str = None) -> bool:
         """
-        Cancels a job on the NERSC API.
+        Cancels a job on the site.
 
         Args:
             name (str): The name of the job to be canceled.
@@ -83,8 +81,8 @@ class JobManager:
         Updates the status of all jobs in the job manager.
         """
 
-        queue = self.job_interface.queue()
-        history = self.job_interface.history()
+        queue = asyncio.run(self.job_interface.queue())
+        history = asyncio.run(self.job_interface.history())
         for job_id in self.queue:
             if job_id in queue:
                 self.queue[job_id] = queue[job_id]

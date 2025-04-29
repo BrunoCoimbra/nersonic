@@ -8,4 +8,5 @@ dependencies = [
     "authlib>=1.5.2",
     "debugpy>=1.8.14",
     "requests>=2.32.3",
+    "sfapi-client>=0.4.1",
 ]
