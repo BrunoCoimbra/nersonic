@@ -16,7 +16,7 @@ def main():
     job_manager = JobManager(NerscSiteInterface(config["NERSC"]))
 
     print("Submitting job Triton Server job...")
-    job_manager.submit(name="triton-server", job_path=f"{ROOT_DIR}/sample_jobs/test.sh")
+    job_manager.submit(name="triton-server", job_path=f"{ROOT_DIR}/slurm_triton_deployment/start_triton_slurm.sh")
     print("Done submitting job.\n")
 
     print("Waiting for job to start...")
@@ -31,7 +31,12 @@ def main():
 
     print("Starting load balancer...")
     try:
-        lb = subprocess.Popen(f"{ROOT_DIR}/slurm_triton_deployment/start_lb.sh {job.id}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        lb = subprocess.Popen(
+            f"{ROOT_DIR}/slurm_triton_deployment/start_lb.sh {job.id}",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
         while lb.poll() is None:
             output = lb.stdout.readline()
             if output == b"" and lb.poll() is not None:
@@ -39,7 +44,6 @@ def main():
             if output:
                 print(output.decode().strip())
         print("Load balancer exited with code:", lb.poll())
-        print(lb.stdout.read().decode())
         print(lb.stderr.read().decode())
     except KeyboardInterrupt:
         print("Stopping load balancer...")

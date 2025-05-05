@@ -39,11 +39,12 @@ class NerscSiteInterface(SiteInterface):
 
         return job.jobid
 
-    def cancel_job(self, job_id):
-        response = self.api_client.request(
-            "DELETE", f"/compute/jobs/{self.machine}/{job_id}")
-        if response.status_code != 200:
-            raise RuntimeError(f"Failed to cancel job: {response.text}")
+    async def cancel_job(self, job_id):
+        async with AsyncClient(self.client_id, self.secret) as client:
+            compute = await client.compute(Machine.perlmutter)
+
+        job = await compute.job(job_id)
+        await job.cancel()
 
     async def job_status(self, job_id: str) -> JobArray:
         queue = await self.queue()

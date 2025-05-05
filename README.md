@@ -20,17 +20,11 @@ git clone https://github.com/asnaylor/slurm_triton_deployment.git
 ### In a devcontainer
 This repository includes a devcontainer configuration that allows you to run the code in a containerized environment that includes most depndencies and tools needed to run the code.
 
-### At NERSC Perlmutter in a Shifter container
-You can also run the code in a Shifter container at NERSC Perlmutter. This is a simple way to run the code without having to set up a full environment.
-```bash
-shifter --module=none --image=python /bin/bash
-```
-
 ## Installing dependencies
 You will need to install the dependencies for the code. This repository uses `uv` to manage the dependencies. You can install the dependencies by running the following commands:
 ```bash
-pip install uv  # not needed in devcontainer
-python3 -m uv sync
+curl -LsSf https://astral.sh/uv/install.sh | sh  # not needed in devcontainer
+uv sync
 source .venv/bin/activate
 ```
 

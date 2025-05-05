@@ -51,7 +51,7 @@ class JobManager:
 
         return job_id
     
-    def cancel(self, name: str = None, job_id: str = None) -> bool:
+    def cancel(self, name: str = None, job_id: str = None):
         """
         Cancels a job on the site.
 
@@ -63,26 +63,32 @@ class JobManager:
         """
 
         if job_id == "all":
-            success = True
-            for job in self.queue:
-                success = self.job_interface.cancel(job) and success
-            return success
+            job_list = list(self.queue.keys())
+        else:
+            if name:
+                job_list = [self.name_to_job_id.get(name)]
+            if job_id not in self.queue:
+                raise ValueError(f"Job ID {job_id} not found in the job manager.")
+        
+        async def runner():
+            await asyncio.gather(
+                *[self.job_interface.cancel_job(job_id) for job_id in job_list]
+            )
 
-        if name:
-            job_id = self.name_to_job_id.get(name)
-
-        if job_id not in self.queue:
-            raise ValueError(f"Job ID {job_id} not found in the job manager.")
-
-        return self.job_interface.cancel(job_id)
+        asyncio.run(runner())
 
     def update_queue(self):
         """
         Updates the status of all jobs in the job manager.
         """
 
-        queue = asyncio.run(self.job_interface.queue())
-        history = asyncio.run(self.job_interface.history())
+        async def runner():
+            return await asyncio.gather(
+                self.job_interface.queue(),
+                self.job_interface.history()
+            )
+        queue, history = asyncio.run(runner())
+
         for job_id in self.queue:
             if job_id in queue:
                 self.queue[job_id] = queue[job_id]
@@ -102,7 +108,7 @@ class JobManager:
         """
 
         if job_id == "all":
-            queue = self.job_interface.queue()
+            queue = asyncio.run(self.job_interface.queue())
             self.queue.update(queue)
             return
         
