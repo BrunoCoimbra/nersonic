@@ -7,6 +7,9 @@ requires-python = ">=3.12"
 dependencies = [
     "authlib>=1.5.2",
     "debugpy>=1.8.14",
+    "numpy>=2.2.5",
     "requests>=2.32.3",
     "sfapi-client>=0.4.1",
+    "torchvision>=0.22.0",
+    "tritonclient[all]>=2.46.0",
 ]

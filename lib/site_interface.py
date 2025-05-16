@@ -7,6 +7,27 @@ class SiteInterface(Protocol):
     Interface for job classes.
     """
 
+    async def run(self, executable_path, args: list = None) -> str:
+        """
+        Runs a command on the site.
+
+        Args:
+            executable_path (str): The path to the executable.
+            args (list): The arguments to pass to the executable.
+        Returns:
+            str: The output of the command.
+        """
+
+    async def upload(self, file_path: str) -> str:
+        """
+        Uploads a file to the site.
+
+        Args:
+            file_path (str): The path to the file to be uploaded.
+        Returns:
+            str: The path of the uploaded file on the site.
+        """
+
     async def submit_job(self, job_path: str) -> str:
         """
         Submits a job to the site.

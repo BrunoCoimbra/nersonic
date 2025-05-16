@@ -5,8 +5,8 @@ from lib.site_interface import SiteInterface
 
 
 class JobManager:
-    def __init__(self, job_interface: SiteInterface):
-        self.job_interface = job_interface
+    def __init__(self, site_interface: SiteInterface):
+        self.site_interface = site_interface
         self.queue = JobDictionary()
         self.name_to_job_id = {}
 
@@ -43,8 +43,8 @@ class JobManager:
         if job_path is None:
             raise ValueError("job_path must be provided.")
         
-        job_id = asyncio.run(self.job_interface.submit_job(job_path))
-        job_status = asyncio.run(self.job_interface.job_status(job_id))
+        job_id = asyncio.run(self.site_interface.submit_job(job_path))
+        job_status = asyncio.run(self.site_interface.job_status(job_id))
         self.queue[job_id] = job_status
         if name:
             self.name_to_job_id[name] = job_id
@@ -72,7 +72,7 @@ class JobManager:
         
         async def runner():
             await asyncio.gather(
-                *[self.job_interface.cancel_job(job_id) for job_id in job_list]
+                *[self.site_interface.cancel_job(job_id) for job_id in job_list]
             )
 
         asyncio.run(runner())
@@ -84,8 +84,8 @@ class JobManager:
 
         async def runner():
             return await asyncio.gather(
-                self.job_interface.queue(),
-                self.job_interface.history()
+                self.site_interface.queue(),
+                self.site_interface.history()
             )
         queue, history = asyncio.run(runner())
 
@@ -108,11 +108,11 @@ class JobManager:
         """
 
         if job_id == "all":
-            queue = asyncio.run(self.job_interface.queue())
+            queue = asyncio.run(self.site_interface.queue())
             self.queue.update(queue)
             return
         
-        job_status = self.job_interface.status(job_id)
+        job_status = self.site_interface.status(job_id)
         self.queue[job_id] = job_status
         if name:
             self.name_to_job_id[name] = job_id

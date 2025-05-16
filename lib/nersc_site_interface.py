@@ -17,13 +17,38 @@ class NerscSiteInterface(SiteInterface):
     NERSC job interface class.
     """
 
-    def __init__(self, config):
+    def __init__(self, config: dict):
         self.user = config.get("UserName")
         with open(config.get("ClientIdPath"), "r") as f:
             self.client_id = f.read()
         with open(config.get("PrivateKeyPath")) as f:
             self.secret = JsonWebKey.import_key(json.loads(f.read()))
         self.transfer_dir = config.get("TransferDir")
+
+    async def run(self, executable_path: str, args: list = None) -> str:
+        remote_path = await self.upload(executable_path)
+
+        async with AsyncClient(self.client_id, self.secret) as client:
+            compute = await client.compute(Machine.perlmutter)
+            command = [f"bash {remote_path}"]
+            if args:
+                command += args
+            return_value = await compute.run(command)
+            
+        return return_value.strip()
+
+    async def upload(self, file_path: str) -> str:
+        async with AsyncClient(self.client_id, self.secret) as client:
+            compute = await client.compute(Machine.perlmutter)
+
+            [path] = await compute.ls(self.transfer_dir, directory=True)
+            with open(file_path, "rb") as f:
+                file_bytes = BytesIO(f.read())
+                file_bytes.filename = os.path.basename(file_path)
+                await path.upload(file_bytes)
+
+            return os.path.join(self.transfer_dir, file_bytes.filename)
+
 
     async def submit_job(self, job_path) -> str:
         async with AsyncClient(self.client_id, self.secret) as client:
