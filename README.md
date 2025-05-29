@@ -28,10 +28,20 @@ uv sync
 source .venv/bin/activate
 ```
 
+## Setup
+You will need to make changes to the `settings.cfg` file in the root of this directory to configure the code to use your account and storage locations. At a minimum, you will need to set change the `UserName` and `TransferDir` settings. The transfer directory (`TransferDir`) is the location where the code will transfer files to and from Perlmutter.
+
 ## Running the code
-You can run the code by running the following command:
+You can run the code by executing the `main.py` script. This script will submit a job to Perlmutter that starts an NVIDIA Triton Inference Server instance and registers the woker node with a proxy server running on Spin.
 ```bash
 python3 main.py
+```
+
+## Accessing the Triton Inference Server
+Once the job is running, you can access the Triton Inference Server by connecting to the proxy server running on Spin. The proxy server will forward requests to the Triton Inference Server instance running on Perlmutter.
+The proxy is accessible from the NERSC network at the following URL:
+```
+frontend-loadbalancer.nersonic.development.svc.spin.nersc.org:4873
 ```
 
 ## Debugging
